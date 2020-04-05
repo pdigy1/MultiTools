@@ -390,11 +390,15 @@ case $start in
     echo "Please enter MN alias name and press [ENTER]:"
     read -p "> " alias
     echo "Start add nodes..."
-    $alias addnode 95.179.165.19 add
-    $alias addnode 209.250.224.166 add
-    $alias addnode 108.61.212.198 add
-    $alias addnode 78.141.211.79 add
-    $alias addnode 95.179.209.111 add
+    $alias addnode 120.105.97.93 add
+    $alias addnode 5.189.168.79 add
+    $alias addnode 198.46.177.75 add
+    $alias addnode 164.68.109.77 add
+    $alias addnode 151.106.30.24 add
+    $alias addnode 80.211.45.211 add
+    $alias addnode 104.238.179.69 add 
+    $alias addnode 144.202.19.61 add
+    $alias addnode 45.77.117.180 add
     echo "done..."
     exit
     ;;

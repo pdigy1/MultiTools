@@ -7,7 +7,7 @@ coinnamecli=labx-cli
 ticker=labx
 coindir=labx
 binaries='https://github.com/pdigy1/MultiTools/blob/master/LABXbinary.zip?raw=true'
-snapshot='https://getfile.dokpub.com/yandex/get/https://yadi.sk/d/8EE2hDWNBoJsPQ'
+snapshot='https://getfile.dokpub.com/yandex/get/https://yadi.sk/d/GA_cAbO7zWa0fw'
 port=33330
 rpcport=33329
 currentVersion=1000400

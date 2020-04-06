@@ -24,7 +24,6 @@ GREEN='\033[0;32m'
 NC='\033[0m' # No Color
 
 clear
-
 #Tool menu
 echo -e '\e[4mWelcome to the hash Multitools\e[24m'
 echo "Please enter a number from the list and press [ENTER] to start tool"

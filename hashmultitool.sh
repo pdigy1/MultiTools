@@ -7,7 +7,7 @@ coinnamecli=hash-cli
 ticker=hash
 coindir=hash
 binaries='https://github.com/pdigy1/MultiTools/blob/master/HASHbinary.zip?raw=true'
-snapshot='https://getfile.dokpub.com/yandex/get/https://yadi.sk/d/MqK91E1u3SvegQ'
+snapshot='https://getfile.dokpub.com/yandex/get/https://yadi.sk/d/e42PE3bfZdnvLw'
 port=4188
 rpcport=4189
 currentVersion=1050100

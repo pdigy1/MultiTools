@@ -1,13 +1,13 @@
-# MultiTools#!/bin/bash
+#!/bin/bash
 #Coin info
-version="3.0"
+version="3.0.2"
 coinname=stakecubecoin
 coinnamed=sccd
 coinnamecli=scc-cli
 ticker=SCC
 coindir=scc
-binaries='https://github.com/stakecube/StakeCubeCoin/releases/download/v3.0.1/scc-3.0.1-linux-daemon.zip'
-snapshot='https://github.com/stakecube/StakeCubeCoin/releases/download/v3.0.1/bootstrap.zip
+binaries='https://github.com/stakecube/StakeCubeCoin/releases/download/v3.0.2/scc-3.0.2-linux-daemon.zip'
+snapshot='https://getfile.dokpub.com/yandex/get/https://yadi.sk/d/JaeFhFSxVisaiA'
 port=40000
 rpcport=39999
 discord='https://discord.gg/xxjZzJE'
@@ -17,6 +17,14 @@ rpcuser=`pwgen 14 1 b`
 rpcpass=`pwgen 36 1 b`
 
 clear
+cat << "EOF" 
+   _____ _        _         _____      _          
+  / ____| |      | |       / ____|    | |         
+ | (___ | |_ __ _| | _____| |    _   _| |__   ___ 
+  \___ \| __/ _` | |/ / _ \ |   | | | | '_ \ / _ \
+  ____) | || (_| |   <  __/ |___| |_| | |_) |  __/
+ |_____/ \__\__,_|_|\_\___|\_____\__,_|_.__/ \___|
+EOF
 
 #Tool menu
 echo -e '\e[4mWelcome to the StakeCube Multitools '${version}' \e[24m'
@@ -25,10 +33,11 @@ echo "1  - Newserver 2GB swap + IPv6 setup. REQUIRES RESTART"
 echo "2  - Newserver 8GB swap + IPv6 setup. REQUIRES RESTART"
 echo "3  - Enable IPv6"
 echo "4  - Wallet update (all ${ticker} nodes)"
-echo "5  - Remove MasterNode"
-echo "6  - Masternode install"
-echo "7  - Masternode stop/start/restart (stop/start/restart all ${ticker} nodes)"
-echo "8  - Check health and repair (all ${ticker} nodes)- COMING SOON!"
+echo "5  - Chain/PoSe maintenance tool (single ${ticker} node)"
+echo "6  - Remove MasterNode"
+echo "7  - Masternode install"
+echo "8  - Masternode stop/start/restart (stop/start/restart all ${ticker} nodes)"
+echo "9  - Check health and repair (all ${ticker} nodes)- COMING SOON!"
 echo "0  - Exit"
 echo ""
 read -p "> " start
@@ -48,6 +57,7 @@ case $start in
     echo "/var/swapfile none swap sw 0 0" >> /etc/fstab
     #Update linux
     apt-get update && apt-get -y upgrade
+    apt -y install ufw
     apt -s dist-upgrade | grep "^Inst" | grep -i securi | awk -F " " {'print $2'} | xargs apt -y install
     #Allow SSH and enable firewall
     ufw allow 22/tcp comment "SSH"
@@ -55,7 +65,7 @@ case $start in
     #Install zip and unzip tools
     apt install zip unzip
     #Get check.sh
-    wget https://github.com/stakecube/SCC-multitool/blob/master/check.sh -O check.sh
+    wget https://raw.githubusercontent.com/stakecube/SCC-multitool/master/check.sh -O check.sh
     chmod +x check.sh
 	#Enable IPv6
 	sleep 2
@@ -93,7 +103,7 @@ case $start in
     #Install zip and unzip tools
     apt install zip unzip
     #Get check.sh
-    wget https://github.com/stakecube/SCC-multitool/blob/master/check.sh -O check.sh
+    wget https://raw.githubusercontent.com/stakecube/SCC-multitool/master/check.sh -O check.sh
     chmod +x check.sh
 	#Enable IPv6
 	sleep 2
@@ -140,7 +150,7 @@ case $start in
 	echo "Restarting $i.."
 	systemctl restart $i
 	echo "$i updated and restarted"
-	echo "Pausing to let $i settle"
+	echo "Pausing for 2 minutes to let $i settle"
 	sleep 120
 	else
 	echo "No $ticker MN's found to update"
@@ -149,42 +159,55 @@ case $start in
 	echo "Wallet update tool finished"
 	exit
 	;;
-    5) echo "Starting Removal tool"
-    echo "Checking home directory for MN alias's"
-    ls /home
-    echo "Above are the alias names for installed MN's"
-    echo "please enter MN alias name"
-    read alias
-    echo "Stopping $alias"
-    systemctl stop $alias
-    echo "Pausing script to ensure $alias has stopped"
-    sleep 15
-	#ipv6check and remove
-	confip=$(sed -n '11p' /home/${alias}/.${coindir}/${coinname}.conf)
-	if [[ ${confip} = bind=[*** ]]
-	then
-		confip=$(echo $confip | sed "s/bind=//g")
-		confip=$(echo $confip | sed 's/\[//')
-		confip=$(echo $confip | sed 's/\]//')
-		echo "confip is $confip"
-		echo "removing $confip from 01-netcfg.yaml"
-		sed -i "/${confip}/d" /etc/netplan/01-netcfg.yaml
-		netplan apply
-	else
-		echo "$alias.conf file showing $confip"
-		echo "IPv6 not found skipping removal of IP from netplan"
-	fi
+	5) echo "Starting chain repair/PoSe maintenance tool"
+	echo "Checking home directory for MN alias's"
+	ls /home
+	echo "Above are the alias names for installed MN's"
+	echo "Please enter MN alias name"
+	read alias
+	echo "Stopping $alias"
+	systemctl stop $alias
+	sleep 5
+	cd /home/$alias
+	find /home/$alias/.${coindir}/* ! -name "wallet.dat" ! -name "*.conf" -delete
+	echo "Downloading and replacing chain files"
+	wget -qq ${snapshot} -O ${coindir}.zip
+	unzip ${coindir}.zip
+	chown -R $alias /home/${alias}
+	echo "Removing downloaded files"
+	rm /home/${alias}/${coindir}.zip
+	echo "Starting $alias after repair"
+	systemctl start ${alias}.service
+	sleep 5
+	echo ""
+	echo "Please wait for a moment.. and use $alias masternode status to check if $alais is ready for POSE unban or still showing READY"
+	echo "If $alias showing POSE banned you will need to run the protx update command to unban"
+	echo "Below is an example of the protx update command to use in your main wallets debug console"
+	echo "protx update_service proTxHash ipAndPort operatorKey (operatorPayoutAddress feeSourceAddress)"
+	echo "Chain repair tool finished"
+	exit
+	;;	
+	6) echo "Starting Removal tool"
+	echo "Checking home directory for MN alias's"
+	ls /home
+	echo "Above are the alias names for installed MN's"
+	echo "please enter MN alias name"
+	read alias
+	echo "Stopping $alias"
+	systemctl stop $alias
+	echo "Pausing script to ensure $alias has stopped"
+	sleep 15
 	systemctl disable $alias
 	rm /usr/local/bin/$alias
 	rm /etc/systemd/system/$alias.service
 	deluser $alias
-    rm -r /home/$alias
-    echo "$alias removed"
-    exit
-    ;;
-    6) echo "Starting $ticker MasterNode install"
-    ;;
-    7) echo "Starting stop/start tool..."
+	rm -r /home/$alias
+	echo "$alias removed"
+	exit
+	;;
+	7) echo "Starting $ticker MasterNode install"
+	;;
+	8) echo "Starting stop/start tool..."
 	echo "Please enter <stop> to stop all ${ticker} nodes"
 	echo "Please enter <start> to start all ${ticker} nodes"
 	echo "Please enter <restart> to restart all ${ticker} nodes"
@@ -200,7 +223,7 @@ case $start in
 			then
 				echo "${stopstart}ing $i.."
 				systemctl $stopstart $i
-				echo "Pausing to let $i settle"
+				echo "Pausing for 2 minutes to let $i settle"
 				sleep 120
 			else
 				echo "${ticker} node not found"
@@ -210,7 +233,7 @@ case $start in
 	echo "Wallet update tool finished"
 	exit
     ;;
-	8) echo "Starting health check and repair tool"
+	9) echo "Starting health check and repair tool"
 	echo "Tool coming soon! Now closing.."
 	exit
     ;;
@@ -240,7 +263,7 @@ then
 	echo " 2 $dipv6"
 	netconfcount=$(grep -c :0000:0000:0000: /etc/netplan/01-netcfg.yaml)
 	echo "$netconfcount"
-	cipv6=$(( $netconfcount+1 ))
+	cipv6=$(( $netconfcount+51 ))
 	ipv6="$(echo $dipv6 | sed "s/:0001/:$cipv6/g")"
 	echo "New IPv6 is $ipv6"
 	#Add IPv6 address to /etc/netplan/01-netcfg.yaml
@@ -290,7 +313,7 @@ cd /usr/local/bin
 wget ${binaries} -O ${coinname}.zip
 unzip ${coinname}.zip
 chmod +x ${coinnamecli} ${coinnamed}
-rm ${coinanme}.zip
+rm ${coinname}.zip
 echo "$alias node binaries installed"
 fi
 #Node intergration
@@ -331,6 +354,7 @@ cd /home/$alias
 wget ${snapshot} -O ${coinname}.zip
 unzip ${coinname}.zip
 echo "$coinname dir setup"
+rm ${coinname}.zip
 #make conf file
 echo "Creating $coinname conf file"
 cd .$coindir
